@@ -37,6 +37,7 @@ public abstract class EnemyAbility : MonoBehaviour
             return false;
 
         float distance = vision.DistanceToPlayer;
+        Debug.Log("Distance Player: " + distance);
         return distance >= minRange && distance <= maxRange;
     }
 

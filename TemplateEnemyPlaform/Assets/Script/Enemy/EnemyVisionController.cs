@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class EnemyVisionController : MonoBehaviour
@@ -7,7 +6,6 @@ public class EnemyVisionController : MonoBehaviour
     [SerializeField]
     private Transform player;
 
-    public float DistanceToPlayer { get; private set; }
     [SerializeField]
     private Transform visionOrigin;
 
@@ -28,6 +26,10 @@ public class EnemyVisionController : MonoBehaviour
     [SerializeField]
     private Vector2 facingDirection = Vector2.right;
 
+    [Tooltip("Marcado: a visão gira junto com o flip do inimigo. Desmarcado: a direção fica fixa.")]
+    [SerializeField]
+    private bool followFlip = true;
+
     [Header("Obstáculos")]
     [SerializeField]
     private LayerMask obstacleLayer;
@@ -45,9 +47,9 @@ public class EnemyVisionController : MonoBehaviour
     public Transform Player => player;
     public bool CanSeePlayer => canSeePlayer;
     public bool IsPlayerInAttackRange => isPlayerInAttackRange;
+    public float DistanceToPlayer { get; private set; }
 
     public Vector2 LastKnownPlayerPosition => lastKnownPlayerPosition;
-
     public bool HasLastKnownPosition => hasLastKnownPosition;
 
     private void Awake()
@@ -119,8 +121,12 @@ public class EnemyVisionController : MonoBehaviour
 
         isPlayerInAttackRange = distance <= attackRange;
     }
+
     public void SetFacingDirection(Vector2 direction)
     {
+        if (!followFlip)
+            return;
+
         if (direction.sqrMagnitude > 0f)
             facingDirection = direction.normalized;
     }
@@ -133,15 +139,22 @@ public class EnemyVisionController : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        Vector3 origin = visionOrigin != null ? visionOrigin.position : transform.position;
+        Vector3 origin = transform.position;
+        if (visionOrigin != null)
+            origin = visionOrigin.position;
 
-        Vector2 facing = facingDirection.sqrMagnitude > 0f ? facingDirection.normalized : Vector2.right;
+        Vector2 facing = Vector2.right;
+        if (facingDirection.sqrMagnitude > 0f)
+            facing = facingDirection.normalized;
 
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(origin, visionRange);
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(origin, attackRange);
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(origin, awarenessRange);
 
         if (fieldOfView >= 360f)
             return;
@@ -158,7 +171,6 @@ public class EnemyVisionController : MonoBehaviour
         for (int i = 0; i <= segments; i++)
         {
             float angle = baseAngle - halfAngle + fieldOfView * i / segments;
-
             float radians = angle * Mathf.Deg2Rad;
 
             Vector3 point = origin + new Vector3(Mathf.Cos(radians), Mathf.Sin(radians), 0f) * visionRange;
@@ -170,36 +182,25 @@ public class EnemyVisionController : MonoBehaviour
         }
 
         float leftAngle = (baseAngle - halfAngle) * Mathf.Deg2Rad;
-
         float rightAngle = (baseAngle + halfAngle) * Mathf.Deg2Rad;
 
         Gizmos.DrawLine(origin, origin + new Vector3(Mathf.Cos(leftAngle), Mathf.Sin(leftAngle), 0f) * visionRange);
-
         Gizmos.DrawLine(origin, origin + new Vector3(Mathf.Cos(rightAngle), Mathf.Sin(rightAngle), 0f) * visionRange);
     }
 
     private void OnDrawGizmos()
     {
         if (player == null)
-        {
             return;
-        }
 
         if (!canSeePlayer)
-        {
             return;
-        }
 
         Vector3 origin = transform.position;
-
         if (visionOrigin != null)
-        {
             origin = visionOrigin.position;
-        }
 
         Gizmos.color = Color.blue;
-
         Gizmos.DrawLine(origin, player.position);
     }
-
 }

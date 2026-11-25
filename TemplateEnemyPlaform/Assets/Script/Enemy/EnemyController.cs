@@ -88,7 +88,6 @@ public class EnemyController : MonoBehaviour
             return;
 
         sprite.flipX = directionX < 0f;
-        vision.SetFacingDirection(new Vector2(directionX, 0f));
     }
 
     public void DamageEnemy(float damageHit)
